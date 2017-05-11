@@ -1,0 +1,16 @@
+case "$1" in
+  start)
+    echo "iniciando servico verificar_http"
+    python /home/verificar_http.py &
+    ;;
+  stop)
+    echo "pararando servico verificar_http"
+    killall python
+    ;;
+  *)
+  echo "Usage: /etc/init.d/verificar_http{start|stop}"
+  exit 1
+  ;;
+esac 
+
+exit 0 
