@@ -1,9 +1,10 @@
 
-import requests, time, commands, smtplib
+import requests, time, subprocess, smtplib
 
 class Verificador(object):
 	__caiu = 0
-	__quantidade_quedas_para_reiniciar = 3
+	__QUANTIDADE_QUEDAS_PARA_REINICIAR = 3
+	__COMANDO_REINICIAR_SERVICO = "/etc/init.d/tomcat7 restart"
 
 	def __init__(self):
 		self.__caiu = 0		
@@ -25,10 +26,10 @@ class Verificador(object):
 		except Exception as e:
 			print('e-mail nao enviado: {0}'.format(str(e)))
 
-	def __restart_tomcat(self):
+	def __restart_servico(self):
 		try:
 			print('reiniciando tomcat...')
-			ret = commands.getoutput("/etc/init.d/tomcat7 restart")
+			subprocess.call(self.__COMANDO_REINICIAR_SERVICO, shell=True)
 			print('tomcat reiniciado!')
 		except Exception as e:
 			print('erro ao reiniciar tomcat: '.format(str(e)))
@@ -36,22 +37,22 @@ class Verificador(object):
 	def __tratar_queda_servico(self):
 		self.__caiu = self.__caiu + 1
 		print('servico caiu {0} vezes'.format(self.__caiu))
-		if self.__caiu == self.__quantidade_quedas_para_reiniciar:
+		if self.__caiu == self.__QUANTIDADE_QUEDAS_PARA_REINICIAR:
 			self.__enviar_email('Subject: {0}\n\n{0}'.format('caiu :('))
-			self.__restart_tomcat()			
+			self.__restart_servico()			
 
-	def __verificar_servico_caiu_e_voltou_ao_normal(self):
-		if self.__caiu >= self.__quantidade_quedas_para_reiniciar:
+	def __servico_caiu_e_voltou_ao_normal(self):
+		if self.__caiu >= self.__QUANTIDADE_QUEDAS_PARA_REINICIAR:
 			self.__enviar_email('Subject: {0}\n\n{0}'.format('voltou \o/!'))
 			self.__caiu = 0
 
-	def verificar_servico_kelps(self):
+	def verificar_servico(self):
 		
 		try: 
 			r = requests.get('http://url/')
 			if r.status_code == 200:
 				print('no ar')
-				self.__verificar_servico_caiu_e_voltou_ao_normal()			
+				self.__servico_caiu_e_voltou_ao_normal()			
 			else:
 				self.__tratar_queda_servico()				
 
@@ -66,7 +67,7 @@ if __name__ == '__main__':
 	verificador = Verificador()
 	while True:
 		try:
-			verificador.verificar_servico_kelps()			
+			verificador.verificar_servico()			
 		except Exception as e:
 			print('Erro ao verificar api: {0}'.format(str(e)))
 
